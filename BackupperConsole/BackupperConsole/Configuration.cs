@@ -48,12 +48,12 @@ namespace BackupperConsole
             return (p == 4) || (p == 6) || (p == 128);
         }
         /// <summary>
-        /// check the existence of the ini file and the necessary parameter valorization
+        /// check the existence of the ini file
         /// </summary>
         /// <returns>true if exist</returns>
         public bool ExistConfig()
         {
-            bool exist = File.Exists(Path) && !string.IsNullOrEmpty(FromDir) && !string.IsNullOrEmpty(BackupDir);
+            bool exist = File.Exists(Path);
             return exist;
         }
         /// <summary>
@@ -72,8 +72,8 @@ namespace BackupperConsole
                 {
                     var from = string.Format("FromDir ={0};", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
                     var backup = string.Format("BackupDir={0};", System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"));
-                    var extension = "Extensions =.jpg &.jpeg";
-                    var ignoredir = "IgnoreDir =some & directory";
+					var extension = "Extensions =.jpg &.jpeg;";
+					var ignoredir = "IgnoreDir =some & directory;";
                     writer.Write(string.Format("{0}{1}{2}{3}", from, backup, extension, ignoredir));
                 }
                 ReadConfig();
