@@ -13,22 +13,27 @@ namespace BackupperConsole
         /// root of the backup
         /// </summary>
         public string FromDir { get; set; }
+
         /// <summary>
         /// path where replicate the backup structure
         /// </summary>
         public string BackupDir { get; set; }
+
         /// <summary>
         /// directory to ignore (will ignore subfolder)
         /// </summary>
         public List<string> IgnoreDir { get; set; }
+
         /// <summary>
         /// whitelist extension of file to backup
         /// </summary>
         public List<string> Extensions { get; set; }
+
         /// <summary>
         /// path of the ini file
         /// </summary>
         public string Path { get; }
+
         /// <summary>
         /// constructor
         /// </summary>
@@ -38,6 +43,7 @@ namespace BackupperConsole
             //enviromental = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
         }
+
         /// <summary>
         /// detrminates the o.s. linux=true windows=false
         /// </summary>
@@ -47,6 +53,7 @@ namespace BackupperConsole
             int p = (int)Environment.OSVersion.Platform;
             return (p == 4) || (p == 6) || (p == 128);
         }
+
         /// <summary>
         /// check the existence of the ini file
         /// </summary>
@@ -56,6 +63,7 @@ namespace BackupperConsole
             bool exist = File.Exists(Path);
             return exist;
         }
+
         /// <summary>
         /// read the configuration file, if not exist one default will be created
         /// </summary>
@@ -72,13 +80,14 @@ namespace BackupperConsole
                 {
                     var from = string.Format("FromDir ={0};", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
                     var backup = string.Format("BackupDir={0};", System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"));
-					var extension = "Extensions =.jpg &.jpeg;";
-					var ignoredir = "IgnoreDir =some & directory;";
+                    var extension = "Extensions =.jpg &.jpeg;";
+                    var ignoredir = "IgnoreDir =some & directory;";
                     writer.Write(string.Format("{0}{1}{2}{3}", from, backup, extension, ignoredir));
                 }
                 ReadConfig();
             }
         }
+
         /// <summary>
         /// read the configuration from file
         /// </summary>
@@ -106,9 +115,11 @@ namespace BackupperConsole
                             case "fromdir":
                                 FromDir = Params[1];
                                 break;
+
                             case "backupdir":
                                 BackupDir = Params[1];
                                 break;
+
                             case "extensions":
                                 var extension = Params[1].Split('&');
                                 Extensions = new List<string>();
@@ -120,6 +131,7 @@ namespace BackupperConsole
                                     }
                                 }
                                 break;
+
                             case "ignoredir":
                                 var ignoredir = Params[1].Split('&');
                                 IgnoreDir = new List<string>();
