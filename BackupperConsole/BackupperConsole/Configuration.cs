@@ -9,6 +9,10 @@ namespace BackupperConsole
     /// </summary>
     public class Configuration
     {
+        private List<string> _ignoreDir;
+
+        private List<string> _extensions;
+
         /// <summary>
         /// root of the backup
         /// </summary>
@@ -22,12 +26,32 @@ namespace BackupperConsole
         /// <summary>
         /// directory to ignore (will ignore subfolder)
         /// </summary>
-        public List<string> IgnoreDir { get; set; }
+        public List<string> IgnoreDir
+        {
+            get
+            {
+                return _ignoreDir ?? new List<string>();
+            }
+            set
+            {
+                _ignoreDir = value;
+            }
+        }
 
         /// <summary>
         /// whitelist extension of file to backup
         /// </summary>
-        public List<string> Extensions { get; set; }
+        public List<string> Extensions
+        {
+            get
+            {
+                return _extensions ?? new List<string>();
+            }
+            set
+            {
+                _extensions = value;
+            }
+        }
 
         /// <summary>
         /// path of the ini file

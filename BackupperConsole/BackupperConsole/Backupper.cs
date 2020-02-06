@@ -212,7 +212,7 @@ namespace BackupperConsole
                             // Perform whatever action is required in your scenario.
                             System.IO.FileInfo fi = new System.IO.FileInfo(file);
 
-                            if (conf.Extensions.Contains(fi.Extension.ToLower()))
+                            if (!conf.Extensions.Contains(fi.Extension.ToLower()))
                             {
                                 FileFound += 1;
                                 var filePath = Path.Combine(fi.DirectoryName, fi.Name);
@@ -220,11 +220,10 @@ namespace BackupperConsole
                                 if (!Compare(filePath, varBackupPath, fi.Name))
                                 {
 #if DEBUG
-                                    Console.WriteLine("copy: " + fi.Name);
+                                    //Console.WriteLine("copy: " + fi.Name);
 #endif
                                     FileCopied += 1;
                                     CopyFile(filePath, varBackupPath);
-                                    //System.IO.File.Copy(filePath, varBackupPath, true);
                                 }
                             }
                         }
