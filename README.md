@@ -1,3 +1,3 @@
 # Backupper
-backup a folder with substructure
-configuration file for file extension whitelist and ignored directories
+backup a folder with
+configuration file for extensions whitelist and ignored directories
