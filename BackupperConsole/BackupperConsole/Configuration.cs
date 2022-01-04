@@ -9,34 +9,23 @@ namespace BackupperConsole
     /// </summary>
     public class Configuration
     {
+        private List<string> _extensions;
         private List<string> _ignoreDir;
 
-        private List<string> _extensions;
-
         /// <summary>
-        /// root of the backup
+        /// constructor
         /// </summary>
-        public string FromDir { get; set; }
+        public Configuration()
+        {
+            //var enviromental = Environment.GetEnvironmentVariable(IsLinux ? "Home" : "LocalAppData");
+            //enviromental = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
+        }
 
         /// <summary>
         /// path where replicate the backup structure
         /// </summary>
         public string BackupDir { get; set; }
-
-        /// <summary>
-        /// directory to ignore (will ignore subfolder)
-        /// </summary>
-        public List<string> IgnoreDir
-        {
-            get
-            {
-                return _ignoreDir ?? new List<string>();
-            }
-            set
-            {
-                _ignoreDir = value;
-            }
-        }
 
         /// <summary>
         /// whitelist extension of file to backup
@@ -54,18 +43,53 @@ namespace BackupperConsole
         }
 
         /// <summary>
+        /// root of the backup
+        /// </summary>
+        public string FromDir { get; set; }
+
+        /// <summary>
+        /// directory to ignore (will ignore subfolder)
+        /// </summary>
+        public List<string> IgnoreDir
+        {
+            get
+            {
+                return _ignoreDir ?? new List<string>();
+            }
+            set
+            {
+                _ignoreDir = value;
+            }
+        }
+
+        /// <summary>
         /// path of the ini file
         /// </summary>
         public string Path { get; }
 
-        /// <summary>
-        /// constructor
-        /// </summary>
-        public Configuration()
+        public void CreateDefaultConfig()
         {
-            //var enviromental = Environment.GetEnvironmentVariable(IsLinux ? "Home" : "LocalAppData");
-            //enviromental = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
+            if (!ExistConfig())
+            {
+                Stream fileStream = new FileStream(Path, FileMode.Create);
+                using (StreamWriter writer = new StreamWriter(fileStream))
+                {
+                    var from = string.Format("FromDir ={0};", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
+                    var backup = string.Format("BackupDir={0};", System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"));
+                    var extension = "Extensions =.jpg &.jpeg;";
+                    var ignoredir = "IgnoreDir =some & directory;";
+                    writer.Write(string.Format("{0}{1}{2}{3}", from, backup, extension, ignoredir));
+                }
+            }
+        }
+
+        /// <summary>
+        /// check the existence of the ini file
+        /// </summary>
+        /// <returns>true if exist</returns>
+        public bool ExistConfig()
+        {
+            return File.Exists(Path);
         }
 
         /// <summary>
@@ -79,35 +103,12 @@ namespace BackupperConsole
         }
 
         /// <summary>
-        /// check the existence of the ini file
-        /// </summary>
-        /// <returns>true if exist</returns>
-        public bool ExistConfig()
-        {
-            bool exist = File.Exists(Path);
-            return exist;
-        }
-
-        /// <summary>
         /// read the configuration file, if not exist one default will be created
         /// </summary>
         public void ReadConfigurationSafe()
         {
             if (ExistConfig())
             {
-                ReadConfig();
-            }
-            else
-            {
-                Stream fileStream = new FileStream(Path, FileMode.Create);
-                using (StreamWriter writer = new StreamWriter(fileStream))
-                {
-                    var from = string.Format("FromDir ={0};", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
-                    var backup = string.Format("BackupDir={0};", System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"));
-                    var extension = "Extensions =.jpg &.jpeg;";
-                    var ignoredir = "IgnoreDir =some & directory;";
-                    writer.Write(string.Format("{0}{1}{2}{3}", from, backup, extension, ignoredir));
-                }
                 ReadConfig();
             }
         }
@@ -117,8 +118,8 @@ namespace BackupperConsole
         /// </summary>
         private void ReadConfig()
         {
-            FileStream fileStream = new FileStream(Path, FileMode.Open);
-            string readed = "";
+            var fileStream = new FileStream(Path, FileMode.Open);
+            var readed = "";
             using (StreamReader reader = new StreamReader(fileStream))
             {
                 readed = reader.ReadToEnd();

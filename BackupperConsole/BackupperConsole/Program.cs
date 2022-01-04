@@ -4,7 +4,7 @@
     {
         private static void Main(string[] args)
         {
-            Backupper b = new Backupper();
+            var b = new Backupper();
             b.Run();
         }
     }

@@ -55,7 +55,7 @@ namespace BackupperConsole
             }
             else
             {
-                conf.ReadConfigurationSafe();
+                conf.CreateDefaultConfig();
                 Console.WriteLine(string.Format("configuration not found, created standard in {0}...", conf.Path));
             }
             Console.WriteLine("============ Press Any key To Continue =============");
@@ -82,14 +82,14 @@ namespace BackupperConsole
                 return false;
             }
 
-            byte[] hash1 = GenerateHash(filePath1);
-            byte[] hash2 = GenerateHash(filePath2);
+            var hash1 = GenerateHash(filePath1);
+            var hash2 = GenerateHash(filePath2);
 
             if (hash1.Length != hash2.Length)
             {
                 return false;
             }
-            for (int i = 0; i < hash1.Length; i++)
+            for (var i = 0; i < hash1.Length; i++)
             {
                 if (hash1[i] != hash2[i])
                 {
@@ -106,8 +106,8 @@ namespace BackupperConsole
         /// <returns>byte[] of the hashed file</returns>
         private byte[] GenerateHash(string filePath)
         {
-            MD5 crypto = MD5.Create();
-            using (FileStream stream = File.OpenRead(filePath))
+            var crypto = MD5.Create();
+            using (var stream = File.OpenRead(filePath))
             {
                 return crypto.ComputeHash(stream);
             }
@@ -119,8 +119,8 @@ namespace BackupperConsole
         /// <param name="PathFile">path to file</param>
         private void NormalizeFolder(string PathFile)
         {
-            string[] paths = PathFile.Split(Path.DirectorySeparatorChar);
-            string pathToCheck = "";
+            var paths = PathFile.Split(Path.DirectorySeparatorChar);
+            var pathToCheck = "";
             foreach (var path in paths)
             {
                 if (path != null && !string.IsNullOrEmpty(path))
@@ -141,10 +141,10 @@ namespace BackupperConsole
         /// <param name="dest">destination path</param>
         public void CopyFile(string source, string dest)
         {
-            using (FileStream sourceStream = new FileStream(source, FileMode.Open))
+            using (var sourceStream = new FileStream(source, FileMode.Open))
             {
-                byte[] buffer = new byte[64 * 1024]; // Change to suitable size after testing performance
-                using (FileStream destStream = new FileStream(dest, FileMode.Create))
+                var buffer = new byte[64 * 1024]; // Change to suitable size after testing performance
+                using (var destStream = new FileStream(dest, FileMode.Create))
                 {
                     int i;
                     while ((i = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
@@ -162,7 +162,7 @@ namespace BackupperConsole
         /// <param name="backupRoot"></param>
         public void BackupRun(string root, string backupRoot)
         {
-            Stack<string> dirs = new Stack<string>(20);
+            var dirs = new Stack<string>(20);
 
             if (!System.IO.Directory.Exists(root))
             {
@@ -172,7 +172,7 @@ namespace BackupperConsole
 
             while (dirs.Count > 0)
             {
-                string currentDir = dirs.Pop();
+                var currentDir = dirs.Pop();
                 if (!conf.IgnoreDir.Contains(currentDir))
                 {
                     string[] subDirs;
@@ -205,7 +205,7 @@ namespace BackupperConsole
                         Console.WriteLine(e.Message);
                         continue;
                     }
-                    foreach (string file in files)
+                    foreach (var file in files)
                     {
                         try
                         {
@@ -220,7 +220,7 @@ namespace BackupperConsole
                                 if (!Compare(filePath, varBackupPath, fi.Name))
                                 {
 #if DEBUG
-                                    //Console.WriteLine("copy: " + fi.Name);
+                                    Console.WriteLine("copy: " + fi.Name);
 #endif
                                     FileCopied += 1;
                                     CopyFile(filePath, varBackupPath);
@@ -233,10 +233,12 @@ namespace BackupperConsole
                             continue;
                         }
                     }
-                    // Push the subdirectories onto the stack for traversal.
-                    // This could also be done before handing the files.
-                    foreach (string str in subDirs)
+                    // Push the subdirectories onto the stack for traversal. This could also be done
+                    // before handing the files.
+                    foreach (var str in subDirs)
+                    {
                         dirs.Push(str);
+                    }
                 }
             }
         }
