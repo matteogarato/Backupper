@@ -1,6 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace BackupperConsole
 {
@@ -9,19 +10,6 @@ namespace BackupperConsole
     /// </summary>
     public class Configuration
     {
-        private List<string> _extensions;
-        private List<string> _ignoreDir;
-
-        /// <summary>
-        /// constructor
-        /// </summary>
-        public Configuration()
-        {
-            //var enviromental = Environment.GetEnvironmentVariable(IsLinux ? "Home" : "LocalAppData");
-            //enviromental = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
-            Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
-        }
-
         /// <summary>
         /// path where replicate the backup structure
         /// </summary>
@@ -30,17 +18,7 @@ namespace BackupperConsole
         /// <summary>
         /// whitelist extension of file to backup
         /// </summary>
-        public List<string> Extensions
-        {
-            get
-            {
-                return _extensions ?? new List<string>();
-            }
-            set
-            {
-                _extensions = value;
-            }
-        }
+        public List<string> Extensions { get; set; }
 
         /// <summary>
         /// root of the backup
@@ -50,36 +28,37 @@ namespace BackupperConsole
         /// <summary>
         /// directory to ignore (will ignore subfolder)
         /// </summary>
-        public List<string> IgnoreDir
-        {
-            get
-            {
-                return _ignoreDir ?? new List<string>();
-            }
-            set
-            {
-                _ignoreDir = value;
-            }
-        }
+        public List<string> IgnoreDir { get; set; }
 
         /// <summary>
         /// path of the ini file
         /// </summary>
-        public string Path { get; }
+        [JsonIgnore]
+        public static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
 
-        public void CreateDefaultConfig()
+        public Configuration()
+        {
+            Extensions = new List<string>();
+            IgnoreDir = new List<string>();
+        }
+        public static void CreateDefaultConfig()
         {
             if (!ExistConfig())
             {
-                Stream fileStream = new FileStream(Path, FileMode.Create);
-                using (StreamWriter writer = new StreamWriter(fileStream))
+                var defaultConfig = new Configuration
                 {
-                    var from = string.Format("FromDir ={0};", System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location));
-                    var backup = string.Format("BackupDir={0};", System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"));
-                    var extension = "Extensions =.jpg &.jpeg;";
-                    var ignoredir = "IgnoreDir =some & directory;";
-                    writer.Write(string.Format("{0}{1}{2}{3}", from, backup, extension, ignoredir));
-                }
+                    FromDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location),
+                    BackupDir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"),
+                    Extensions = new List<string>
+                    {
+                        ".jpeg",
+                        ".jpg"
+                    },
+                    IgnoreDir = new List<string> { "some", "directory" }
+                };
+                Stream fileStream = new FileStream(Path, FileMode.Create);
+                using StreamWriter writer = new(fileStream);
+                writer.Write(JsonSerializer.Serialize(defaultConfig));
             }
         }
 
@@ -87,25 +66,15 @@ namespace BackupperConsole
         /// check the existence of the ini file
         /// </summary>
         /// <returns>true if exist</returns>
-        public bool ExistConfig()
+        public static bool ExistConfig()
         {
             return File.Exists(Path);
         }
 
         /// <summary>
-        /// detrminates the o.s. linux=true windows=false
-        /// </summary>
-        /// <returns>true if linux false if windows</returns>
-        public bool IsLinux()
-        {
-            int p = (int)Environment.OSVersion.Platform;
-            return (p == 4) || (p == 6) || (p == 128);
-        }
-
-        /// <summary>
         /// read the configuration file, if not exist one default will be created
         /// </summary>
-        public void ReadConfigurationSafe()
+        public static void Read()
         {
             if (ExistConfig())
             {
@@ -116,11 +85,11 @@ namespace BackupperConsole
         /// <summary>
         /// read the configuration from file
         /// </summary>
-        private void ReadConfig()
+        private static void ReadConfig()
         {
             var fileStream = new FileStream(Path, FileMode.Open);
             var readed = "";
-            using (StreamReader reader = new StreamReader(fileStream))
+            using (StreamReader reader = new(fileStream))
             {
                 readed = reader.ReadToEnd();
                 readed = readed.Replace('\n', ' ');
@@ -129,48 +98,7 @@ namespace BackupperConsole
             }
             if (!string.IsNullOrEmpty(readed.Trim()))
             {
-                var configMap = readed.Split(';');
-                foreach (var config in configMap)
-                {
-                    var Params = config.Split('=');
-                    if (Params.Length == 2)
-                    {
-                        switch (Params[0].Trim().ToLower())
-                        {
-                            case "fromdir":
-                                FromDir = Params[1];
-                                break;
-
-                            case "backupdir":
-                                BackupDir = Params[1];
-                                break;
-
-                            case "extensions":
-                                var extension = Params[1].Split('&');
-                                Extensions = new List<string>();
-                                foreach (string s in extension)
-                                {
-                                    if (!Extensions.Contains(s))
-                                    {
-                                        Extensions.Add(s.ToLower());
-                                    }
-                                }
-                                break;
-
-                            case "ignoredir":
-                                var ignoredir = Params[1].Split('&');
-                                IgnoreDir = new List<string>();
-                                foreach (string s in ignoredir)
-                                {
-                                    if (!IgnoreDir.Contains(s))
-                                    {
-                                        IgnoreDir.Add(s.ToLower());
-                                    }
-                                }
-                                break;
-                        }
-                    }
-                }
+                JsonSerializer.Deserialize<Configuration>(readed);
             }
         }
     }

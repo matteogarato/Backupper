@@ -34,9 +34,9 @@ namespace BackupperConsole
             Console.WriteLine("================== Backup Utility ==================");
             Console.WriteLine("reading configuration...");
             conf = new Configuration();
-            if (conf.ExistConfig())
+            if (Configuration.ExistConfig())
             {
-                conf.ReadConfigurationSafe();
+                Configuration.Read();
                 Console.WriteLine("configuration readed...");
                 Console.WriteLine("starting...");
                 try
@@ -55,11 +55,11 @@ namespace BackupperConsole
             }
             else
             {
-                conf.CreateDefaultConfig();
-                Console.WriteLine(string.Format("configuration not found, created standard in {0}...", conf.Path));
+                Configuration.CreateDefaultConfig();
+                Console.WriteLine(string.Format("configuration not found, created standard in {0}...", Configuration.Path));
             }
             Console.WriteLine("============ Press Any key To Continue =============");
-            Console.ReadLine();
+            Console.ReadKey();
         }
 
         /// <summary>
@@ -69,34 +69,20 @@ namespace BackupperConsole
         /// <param name="filePath2">second file to compare</param>
         /// <param name="FileName">filename</param>
         /// <returns>true if the file is the same</returns>
-        private bool Compare(string filePath1, string filePath2, string FileName)
+        private static bool Compare(string filePath1, string filePath2, string FileName)
         {
             var path = filePath2.Replace(FileName, "");
             if (!Directory.Exists(path))
             {
-                NormalizeFolder(path);
                 return false;
             }
             if (!File.Exists(filePath2))
             {
                 return false;
             }
-
             var hash1 = GenerateHash(filePath1);
             var hash2 = GenerateHash(filePath2);
-
-            if (hash1.Length != hash2.Length)
-            {
-                return false;
-            }
-            for (var i = 0; i < hash1.Length; i++)
-            {
-                if (hash1[i] != hash2[i])
-                {
-                    return false;
-                }
-            }
-            return true;
+            return hash1.SequenceEqual(hash2);
         }
 
         /// <summary>
@@ -104,34 +90,11 @@ namespace BackupperConsole
         /// </summary>
         /// <param name="filePath">path to the file</param>
         /// <returns>byte[] of the hashed file</returns>
-        private byte[] GenerateHash(string filePath)
+        private static ReadOnlySpan<byte> GenerateHash(string filePath)
         {
             var crypto = MD5.Create();
-            using (var stream = File.OpenRead(filePath))
-            {
-                return crypto.ComputeHash(stream);
-            }
-        }
-
-        /// <summary>
-        /// check the existance of the path to the file, if not found it will be created
-        /// </summary>
-        /// <param name="PathFile">path to file</param>
-        private void NormalizeFolder(string PathFile)
-        {
-            var paths = PathFile.Split(Path.DirectorySeparatorChar);
-            var pathToCheck = "";
-            foreach (var path in paths)
-            {
-                if (path != null && !string.IsNullOrEmpty(path))
-                {
-                    pathToCheck = Path.Combine(pathToCheck, path);
-                    if (!Directory.Exists(pathToCheck))
-                    {
-                        Directory.CreateDirectory(pathToCheck);
-                    }
-                }
-            }
+            using var stream = File.OpenRead(filePath);
+            return crypto.ComputeHash(stream);
         }
 
         /// <summary>
@@ -139,19 +102,15 @@ namespace BackupperConsole
         /// </summary>
         /// <param name="source">source path</param>
         /// <param name="dest">destination path</param>
-        public void CopyFile(string source, string dest)
+        public static void CopyFile(string source, string dest)
         {
-            using (var sourceStream = new FileStream(source, FileMode.Open))
+            using var sourceStream = new FileStream(source, FileMode.Open);
+            var buffer = new byte[64 * 1024];
+            using var destStream = new FileStream(dest, FileMode.Create);
+            int i;
+            while ((i = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
             {
-                var buffer = new byte[64 * 1024]; // Change to suitable size after testing performance
-                using (var destStream = new FileStream(dest, FileMode.Create))
-                {
-                    int i;
-                    while ((i = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        destStream.Write(buffer, 0, i);
-                    }
-                }
+                destStream.Write(buffer, 0, i);
             }
         }
 
@@ -164,7 +123,7 @@ namespace BackupperConsole
         {
             var dirs = new Stack<string>(20);
 
-            if (!System.IO.Directory.Exists(root))
+            if (!Directory.Exists(root))
             {
                 throw new FileNotFoundException();
             }
@@ -178,63 +137,57 @@ namespace BackupperConsole
                     string[] subDirs;
                     try
                     {
-                        subDirs = System.IO.Directory.GetDirectories(currentDir);
+                        subDirs = Directory.GetDirectories(currentDir);
                     }
-                    catch (UnauthorizedAccessException e)
+                    catch (Exception ex)
                     {
-                        Console.WriteLine(e.Message);
-                        continue;
-                    }
-                    catch (System.IO.DirectoryNotFoundException e)
-                    {
-                        Console.WriteLine(e.Message);
-                        continue;
+                        if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
+                        {
+                            Console.WriteLine(ex.Message);
+                            continue;
+                        }
+                        throw;
                     }
                     string[] files = null;
                     try
                     {
-                        files = System.IO.Directory.GetFiles(currentDir);
+                        files = Directory.GetFiles(currentDir);
                     }
-                    catch (UnauthorizedAccessException e)
+                    catch (Exception ex)
                     {
-                        Console.WriteLine(e.Message);
-                        continue;
-                    }
-                    catch (System.IO.DirectoryNotFoundException e)
-                    {
-                        Console.WriteLine(e.Message);
-                        continue;
+                        if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
+                        {
+                            Console.WriteLine(ex.Message);
+                            continue;
+                        }
+                        throw;
                     }
                     foreach (var file in files)
                     {
                         try
                         {
-                            // Perform whatever action is required in your scenario.
-                            System.IO.FileInfo fi = new System.IO.FileInfo(file);
-
-                            if (!conf.Extensions.Contains(fi.Extension.ToLower()))
+                            var fi = new FileInfo(file);
+                            if (conf.Extensions.Contains(fi.Extension.ToLower()))
                             {
                                 FileFound += 1;
                                 var filePath = Path.Combine(fi.DirectoryName, fi.Name);
-                                var varBackupPath = filePath.Replace(root, backupRoot);
-                                if (!Compare(filePath, varBackupPath, fi.Name))
+                                var backupFilePath = filePath.Replace(root, backupRoot);
+                                if (!Compare(filePath, backupFilePath, fi.Name))
                                 {
 #if DEBUG
                                     Console.WriteLine("copy: " + fi.Name);
 #endif
                                     FileCopied += 1;
-                                    CopyFile(filePath, varBackupPath);
+                                    CopyFile(filePath, backupFilePath);
                                 }
                             }
                         }
-                        catch (System.IO.FileNotFoundException e)
+                        catch (FileNotFoundException e)
                         {
                             Console.WriteLine(e.Message);
                             continue;
                         }
                     }
-                    // Push the subdirectories onto the stack for traversal. This could also be done
-                    // before handing the files.
                     foreach (var str in subDirs)
                     {
                         dirs.Push(str);
