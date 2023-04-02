@@ -74,32 +74,22 @@ namespace BackupperConsole
         /// <summary>
         /// read the configuration file, if not exist one default will be created
         /// </summary>
-        public static void Read()
+        public static Configuration Read()
         {
             if (ExistConfig())
             {
-                ReadConfig();
+                var fileStream = new FileStream(Path, FileMode.Open);
+                var readed = "";
+                using (StreamReader reader = new(fileStream))
+                {
+                    readed = reader.ReadToEnd();
+                    readed = readed.Replace('\n', ' ');
+                    readed = readed.Replace('\r', ' ');
+                    readed = readed.Trim();
+                }
+                return !string.IsNullOrEmpty(readed.Trim()) ? JsonSerializer.Deserialize<Configuration>(readed) : null;
             }
-        }
-
-        /// <summary>
-        /// read the configuration from file
-        /// </summary>
-        private static void ReadConfig()
-        {
-            var fileStream = new FileStream(Path, FileMode.Open);
-            var readed = "";
-            using (StreamReader reader = new(fileStream))
-            {
-                readed = reader.ReadToEnd();
-                readed = readed.Replace('\n', ' ');
-                readed = readed.Replace('\r', ' ');
-                readed = readed.Trim();
-            }
-            if (!string.IsNullOrEmpty(readed.Trim()))
-            {
-                JsonSerializer.Deserialize<Configuration>(readed);
-            }
+            return null;
         }
     }
 }

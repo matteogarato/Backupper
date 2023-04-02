@@ -36,7 +36,7 @@ namespace BackupperConsole
             conf = new Configuration();
             if (Configuration.ExistConfig())
             {
-                Configuration.Read();
+                conf = Configuration.Read();
                 Console.WriteLine("configuration readed...");
                 Console.WriteLine("starting...");
                 try
