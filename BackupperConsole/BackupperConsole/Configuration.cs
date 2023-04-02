@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,95 +12,77 @@ namespace BackupperConsole
     public class Configuration
     {
         /// <summary>
-        /// path where replicate the backup structure
+        /// Path where replicate the backup structure
         /// </summary>
         public string BackupDir { get; set; }
 
         /// <summary>
-        /// whitelist extension of file to backup
+        /// Whitelist extension of file to backup
         /// </summary>
         public List<string> Extensions { get; set; }
 
         /// <summary>
-        /// root of the backup
+        /// Root of the backup
         /// </summary>
         public string FromDir { get; set; }
 
         /// <summary>
-        /// directory to ignore (will ignore subfolder)
+        /// Directory to ignore (will ignore subfolder)
         /// </summary>
         public List<string> IgnoreDir { get; set; }
 
         /// <summary>
-        /// path of the ini file
+        /// Path of the ini file
         /// </summary>
         [JsonIgnore]
-        public static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
+        private static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
 
         public Configuration()
         {
             Extensions = new List<string>();
             IgnoreDir = new List<string>();
         }
+
+        /// <summary>
+        /// Create default configuration file
+        /// </summary>
         public static void CreateDefaultConfig()
         {
-            if (!ExistConfig())
+            var defaultConfig = new Configuration
             {
-                var defaultConfig = new Configuration
-                {
-                    FromDir = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location),
-                    BackupDir = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "Backup"),
-                    Extensions = new List<string>
+                FromDir = "From Directory",
+                BackupDir = "To Directory",
+                Extensions = new List<string>
                     {
                         ".jpeg",
                         ".jpg"
                     },
-                    IgnoreDir = new List<string> { "some", "directory" }
-                };
-                Stream fileStream = new FileStream(Path, FileMode.Create);
-                using StreamWriter writer = new(fileStream);
-                writer.Write(JsonSerializer.Serialize(defaultConfig));
-            }
+                IgnoreDir = new List<string> { "some", "subfolder", "directory" }
+            };
+            Stream fileStream = new FileStream(Path, FileMode.OpenOrCreate);
+            using StreamWriter writer = new(fileStream);
+            writer.Write(JsonSerializer.Serialize(defaultConfig));
         }
 
         /// <summary>
-        /// check the existence of the ini file
+        /// Read the configuration file
         /// </summary>
-        /// <returns>true if exist</returns>
-        public static bool ExistConfig()
+        public static Configuration Read()
         {
-            return File.Exists(Path);
-        }
-
-        /// <summary>
-        /// read the configuration file, if not exist one default will be created
-        /// </summary>
-        public static void Read()
-        {
-            if (ExistConfig())
+            if (File.Exists(Path))
             {
-                ReadConfig();
+                var fileStream = new FileStream(Path, FileMode.Open);
+                using (StreamReader reader = new(fileStream))
+                {
+                    var sb = new StringBuilder(reader.ReadToEnd());
+                    sb.Replace('\n', ' ');
+                    sb.Replace('\r', ' ');
+                    sb.Replace(" ", string.Empty);
+                    var formattedConfig = sb.ToString();
+                    return !string.IsNullOrEmpty(formattedConfig) ? JsonSerializer.Deserialize<Configuration>(formattedConfig) : null;
+                }
             }
-        }
-
-        /// <summary>
-        /// read the configuration from file
-        /// </summary>
-        private static void ReadConfig()
-        {
-            var fileStream = new FileStream(Path, FileMode.Open);
-            var readed = "";
-            using (StreamReader reader = new(fileStream))
-            {
-                readed = reader.ReadToEnd();
-                readed = readed.Replace('\n', ' ');
-                readed = readed.Replace('\r', ' ');
-                readed = readed.Trim();
-            }
-            if (!string.IsNullOrEmpty(readed.Trim()))
-            {
-                JsonSerializer.Deserialize<Configuration>(readed);
-            }
+            return null;
         }
     }
 }

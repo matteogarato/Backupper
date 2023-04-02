@@ -6,27 +6,27 @@ using System.Security.Cryptography;
 namespace BackupperConsole
 {
     /// <summary>
-    /// class for the backup
+    /// Class for the backup
     /// </summary>
     public class Backupper
     {
         /// <summary>
-        /// number of file with specific extension found
+        /// Number of file with specific extension found
         /// </summary>
         private int FileFound = 0;
 
         /// <summary>
-        /// number of file with specific extension copied
+        /// Number of file with specific extension copied
         /// </summary>
         private int FileCopied = 0;
 
         /// <summary>
-        /// configuration
+        /// Configuration
         /// </summary>
         private Configuration conf;
 
         /// <summary>
-        /// run the backup in terminal
+        /// Run the backup in terminal
         /// </summary>
         public void Run()
         {
@@ -34,15 +34,15 @@ namespace BackupperConsole
             Console.WriteLine("================== Backup Utility ==================");
             Console.WriteLine("reading configuration...");
             conf = new Configuration();
-            if (Configuration.ExistConfig())
+            if (conf != null)
             {
-                Configuration.Read();
+                conf = Configuration.Read();
                 Console.WriteLine("configuration readed...");
                 Console.WriteLine("starting...");
                 try
                 {
                     BackupRun(conf.FromDir, conf.BackupDir);
-                    Console.WriteLine(string.Format("ended copy {0} of {1} file", FileCopied, FileFound));
+                    Console.WriteLine($"ended copy {FileCopied} of {FileFound} file");
                 }
                 catch (FileNotFoundException ex)
                 {
@@ -56,14 +56,14 @@ namespace BackupperConsole
             else
             {
                 Configuration.CreateDefaultConfig();
-                Console.WriteLine(string.Format("configuration not found, created standard in {0}...", Configuration.Path));
+                Console.WriteLine("configuration not found, created standard in Application run folder...");
             }
             Console.WriteLine("============ Press Any key To Continue =============");
             Console.ReadKey();
         }
 
         /// <summary>
-        /// hash the file then compare byte to byte the hash
+        /// Hash the file then compare byte to byte the hash
         /// </summary>
         /// <param name="filePath1">first file to compare</param>
         /// <param name="filePath2">second file to compare</param>
@@ -86,7 +86,7 @@ namespace BackupperConsole
         }
 
         /// <summary>
-        /// generate the hash for the file
+        /// Generate the hash for the file
         /// </summary>
         /// <param name="filePath">path to the file</param>
         /// <returns>byte[] of the hashed file</returns>
@@ -98,7 +98,7 @@ namespace BackupperConsole
         }
 
         /// <summary>
-        /// copy teh file
+        /// Copy teh file
         /// </summary>
         /// <param name="source">source path</param>
         /// <param name="dest">destination path</param>
@@ -115,7 +115,7 @@ namespace BackupperConsole
         }
 
         /// <summary>
-        /// iterathe thrugh the folder and check file
+        /// Iterate thrugh the folder and check file
         /// </summary>
         /// <param name="root"></param>
         /// <param name="backupRoot"></param>
