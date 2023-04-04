@@ -1,6 +1,9 @@
 ﻿using System;
+
 using System.Collections.Generic;
+
 using System.IO;
+
 using System.Security.Cryptography;
 
 namespace BackupperConsole
@@ -37,7 +40,7 @@ namespace BackupperConsole
             if (conf != null)
             {
                 conf = Configuration.Read();
-                Console.WriteLine("configuration readed...");
+                Console.WriteLine("configuration read...");
                 Console.WriteLine("starting...");
                 try
                 {
@@ -115,7 +118,7 @@ namespace BackupperConsole
         }
 
         /// <summary>
-        /// Iterate thrugh the folder and check file
+        /// Iterate through the folder and check file
         /// </summary>
         /// <param name="root"></param>
         /// <param name="backupRoot"></param>
