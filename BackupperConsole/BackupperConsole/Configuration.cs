@@ -41,12 +41,6 @@ namespace BackupperConsole
         [JsonIgnore]
         private static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
 
-        public Configuration()
-        {
-            Extensions = new List<string>();
-            IgnoreDir = new List<string>();
-        }
-
         /// <summary>
         /// Create default configuration file
         /// </summary>

@@ -3,7 +3,7 @@
 using System.Collections.Generic;
 
 using System.IO;
-
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace BackupperConsole
@@ -128,8 +128,8 @@ namespace BackupperConsole
         /// <summary>
         /// Iterate through the folder and check file
         /// </summary>
-        /// <param name="root"></param>
-        /// <param name="backupRoot"></param>
+        /// <param name="root">root source from</param>
+        /// <param name="backupRoot">root of destination</param>
         public void BackupRun(string root, string backupRoot)
         {
             var dirs = new Stack<string>(20);
@@ -143,7 +143,7 @@ namespace BackupperConsole
             while (dirs.Count > 0)
             {
                 var currentDir = dirs.Pop();
-                if (!conf.IgnoreDir.Contains(currentDir))
+                if (conf.IgnoreDir == null || conf.IgnoreDir?.Any(c => string.Equals(c, currentDir, StringComparison.InvariantCultureIgnoreCase)) == false)
                 {
                     string[] subDirs;
                     try
@@ -178,11 +178,16 @@ namespace BackupperConsole
                         try
                         {
                             var fi = new FileInfo(file);
-                            if (conf.Extensions.Contains(fi.Extension.ToLower()))
+                            if (conf.Extensions?.Any(c => string.Equals(c, fi.Extension, StringComparison.InvariantCultureIgnoreCase)) != false)
                             {
                                 FileFound += 1;
                                 var filePath = Path.Combine(fi.DirectoryName, fi.Name);
-                                var backupFilePath = filePath.Replace(root, backupRoot);
+                                var backupFolder = fi.DirectoryName.Replace(root, backupRoot);
+                                var backupFilePath = Path.Combine(backupFolder, fi.Name); ;
+                                if (!Directory.Exists(backupFolder))
+                                {
+                                    Directory.CreateDirectory(backupFolder);
+                                }
                                 if (!Compare(filePath, backupFilePath, fi.Name))
                                 {
 #if DEBUG
@@ -219,7 +224,9 @@ namespace BackupperConsole
         {
             if (!silentOp)
             {
+#if !DEBUG
                 Console.ReadKey();
+#endif                
             }
         }
     }
