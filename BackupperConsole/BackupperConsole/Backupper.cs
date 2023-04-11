@@ -14,6 +14,10 @@ namespace BackupperConsole
     public class Backupper
     {
         /// <summary>
+        /// Determines whether to show output to the console
+        /// </summary>
+        private bool silentOp;
+        /// <summary>
         /// Number of file with specific extension found
         /// </summary>
         private int FileFound = 0;
@@ -28,41 +32,45 @@ namespace BackupperConsole
         /// </summary>
         private Configuration conf;
 
+        public Backupper(bool silent)
+        {
+            silentOp = silent;
+        }
+
         /// <summary>
         /// Run the backup in terminal
         /// </summary>
         public void Run()
         {
-            Console.WriteLine("================== Welcome In The ==================");
-            Console.WriteLine("================== Backup Utility ==================");
-            Console.WriteLine("reading configuration...");
+            writeLine("================== Welcome In The ==================\n"
+             + "================== Backup Utility ==================\n"
+             + "reading configuration...");
             conf = new Configuration();
             if (conf != null)
             {
                 conf = Configuration.Read();
-                Console.WriteLine("configuration read...");
-                Console.WriteLine("starting...");
+                writeLine("configuration read...\nstarting...");
                 try
                 {
                     BackupRun(conf.FromDir, conf.BackupDir);
-                    Console.WriteLine($"ended copy {FileCopied} of {FileFound} file");
+                    writeLine($"ended copy {FileCopied} of {FileFound} file");
                 }
                 catch (FileNotFoundException ex)
                 {
-                    Console.WriteLine("backup source not found");
+                    writeLine("backup source not found");
 #if DEBUG
-                    Console.WriteLine(ex.Message);
+                    writeLine(ex.Message);
 #endif
                 }
-                Console.WriteLine("==================== End Backup ====================");
+                writeLine("==================== End Backup ====================");
             }
             else
             {
                 Configuration.CreateDefaultConfig();
-                Console.WriteLine("configuration not found, created standard in Application run folder...");
+                writeLine("configuration not found, created standard in Application run folder...");
             }
-            Console.WriteLine("============ Press Any key To Continue =============");
-            Console.ReadKey();
+            writeLine("============ Press Any key To Continue =============");
+            readLine();
         }
 
         /// <summary>
@@ -146,7 +154,7 @@ namespace BackupperConsole
                     {
                         if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
                         {
-                            Console.WriteLine(ex.Message);
+                            writeLine(ex.Message);
                             continue;
                         }
                         throw;
@@ -160,7 +168,7 @@ namespace BackupperConsole
                     {
                         if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
                         {
-                            Console.WriteLine(ex.Message);
+                            writeLine(ex.Message);
                             continue;
                         }
                         throw;
@@ -178,7 +186,7 @@ namespace BackupperConsole
                                 if (!Compare(filePath, backupFilePath, fi.Name))
                                 {
 #if DEBUG
-                                    Console.WriteLine("copy: " + fi.Name);
+                                    writeLine("copy: " + fi.Name);
 #endif
                                     FileCopied += 1;
                                     CopyFile(filePath, backupFilePath);
@@ -187,7 +195,7 @@ namespace BackupperConsole
                         }
                         catch (FileNotFoundException e)
                         {
-                            Console.WriteLine(e.Message);
+                            writeLine(e.Message);
                             continue;
                         }
                     }
@@ -196,6 +204,22 @@ namespace BackupperConsole
                         dirs.Push(str);
                     }
                 }
+            }
+        }
+
+        private void writeLine(string msg)
+        {
+            if (!silentOp)
+            {
+                Console.WriteLine(msg);
+            }
+        }
+
+        private void readLine()
+        {
+            if (!silentOp)
+            {
+                Console.ReadKey();
             }
         }
     }
