@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Text;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,9 +41,10 @@ namespace BackupperConsole
         /// </summary>
         public void Run()
         {
-            writeLine("================== Welcome In The ==================\n"
-             + "================== Backup Utility ==================\n"
-             + "reading configuration...");
+            var initMsg = new StringBuilder("================== Welcome In The ==================\n");
+            initMsg.Append("================== Backup Utility ==================\n");
+            initMsg.Append("reading configuration...");
+            writeLine(initMsg.ToString());
             conf = new Configuration();
             if (conf != null)
             {
