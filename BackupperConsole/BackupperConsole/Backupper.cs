@@ -33,6 +33,7 @@ namespace BackupperConsole
 
         public Backupper(bool silent)
         {
+            conf = null;
             silentOp = silent;
         }
 
@@ -45,10 +46,9 @@ namespace BackupperConsole
             initMsg.Append("================== Backup Utility ==================\n");
             initMsg.Append("reading configuration...");
             writeLine(initMsg.ToString());
-            conf = new Configuration();
+            conf = Configuration.Read();
             if (conf != null)
             {
-                conf = Configuration.Read();
                 writeLine("configuration read...\nstarting...");
                 try
                 {
