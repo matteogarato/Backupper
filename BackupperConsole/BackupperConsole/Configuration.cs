@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -33,7 +34,7 @@ namespace BackupperConsole
         /// Path of the ini file
         /// </summary>
         [JsonIgnore]
-        private static readonly string Path = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), "config.ini");
+        private static readonly string ConfigFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location), "config.ini");
 
         /// <summary>
         /// Create default configuration file
@@ -44,16 +45,10 @@ namespace BackupperConsole
             {
                 FromDir = "From Directory",
                 BackupDir = "To Directory",
-                Extensions = new List<string>
-                    {
-                        ".jpeg",
-                        ".jpg"
-                    },
+                Extensions = new List<string> { ".jpeg", ".jpg" },
                 IgnoreDir = new List<string> { "some", "subfolder", "directory" }
             };
-            Stream fileStream = new FileStream(Path, FileMode.OpenOrCreate);
-            using StreamWriter writer = new(fileStream);
-            writer.Write(JsonSerializer.Serialize(defaultConfig));
+            File.WriteAllText(ConfigFilePath, JsonSerializer.Serialize(defaultConfig));
         }
 
         /// <summary>
@@ -61,18 +56,10 @@ namespace BackupperConsole
         /// </summary>
         public static Configuration Read()
         {
-            if (File.Exists(Path))
+            if (File.Exists(ConfigFilePath))
             {
-                var fileStream = new FileStream(Path, FileMode.Open);
-                using (StreamReader reader = new(fileStream))
-                {
-                    var sb = new StringBuilder(reader.ReadToEnd());
-                    sb.Replace('\n', ' ');
-                    sb.Replace('\r', ' ');
-                    sb.Replace(" ", string.Empty);
-                    var formattedConfig = sb.ToString();
-                    return !string.IsNullOrEmpty(formattedConfig) ? JsonSerializer.Deserialize<Configuration>(formattedConfig) : null;
-                }
+                var formattedConfig = File.ReadAllText(ConfigFilePath).Replace('\n', ' ').Replace('\r', ' ').Replace(" ", string.Empty);
+                return !string.IsNullOrEmpty(formattedConfig) ? JsonSerializer.Deserialize<Configuration>(formattedConfig) : null;
             }
             return null;
         }

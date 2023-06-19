@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace BackupperConsole
+﻿namespace BackupperConsole
 {
     internal class Program
     {

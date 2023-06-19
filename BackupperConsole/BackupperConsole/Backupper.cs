@@ -31,6 +31,16 @@ namespace BackupperConsole
         /// </summary>
         private Configuration conf;
 
+        /// <summary>
+        ///  ignored dirs
+        /// </summary>
+        private HashSet<string> ignoredDirs;
+        
+        /// <summary>
+        /// write buffer dimension
+        /// </summary>
+        private const int BufferSize = 64 * 1024;
+
         public Backupper(bool silent)
         {
             conf = null;
@@ -42,35 +52,35 @@ namespace BackupperConsole
         /// </summary>
         public void Run()
         {
-            var initMsg = new StringBuilder("================== Welcome In The ==================\n");
-            initMsg.Append("================== Backup Utility ==================\n");
-            initMsg.Append("reading configuration...");
-            writeLine(initMsg.ToString());
+            var initMsg = new StringBuilder("================== Welcome In The ==================\n" +
+                               "================== Backup Utility ==================\n" +
+                               "reading configuration...");
+            WriteLineSilently(initMsg.ToString());
             conf = Configuration.Read();
-            if (conf != null)
-            {
-                writeLine("configuration read...\nstarting...");
-                try
-                {
-                    BackupRun(conf.FromDir, conf.BackupDir);
-                    writeLine($"ended copy {FileCopied} of {FileFound} file");
-                }
-                catch (FileNotFoundException ex)
-                {
-                    writeLine("backup source not found");
-#if DEBUG
-                    writeLine(ex.Message);
-#endif
-                }
-                writeLine("==================== End Backup ====================");
-            }
-            else
+            if (conf == null)
             {
                 Configuration.CreateDefaultConfig();
-                writeLine("configuration not found, created standard in Application run folder...");
+                WriteLineSilently("configuration not found, created standard in Application run folder...");
+                WriteLineSilently("============ Press Any key To Continue =============");
+                ReadLineSilently();
+                return;
             }
-            writeLine("============ Press Any key To Continue =============");
-            readLine();
+            WriteLineSilently("configuration read...\nstarting...");
+            try
+            {
+                BackupRun(conf.FromDir, conf.BackupDir);
+                WriteLineSilently($"ended copy {FileCopied} of {FileFound} file");
+            }
+            catch (FileNotFoundException ex)
+            {
+                WriteLineSilently("backup source not found");
+#if DEBUG
+                WriteLineSilently(ex.Message);
+#endif
+            }
+            WriteLineSilently("==================== End Backup ====================");
+            WriteLineSilently("============ Press Any key To Continue =============");
+            ReadLineSilently();
         }
 
         /// <summary>
@@ -116,12 +126,12 @@ namespace BackupperConsole
         public static void CopyFile(string source, string dest)
         {
             using var sourceStream = new FileStream(source, FileMode.Open);
-            var buffer = new byte[64 * 1024];
             using var destStream = new FileStream(dest, FileMode.Create);
-            int i;
-            while ((i = sourceStream.Read(buffer, 0, buffer.Length)) > 0)
+            var buffer = new byte[BufferSize];
+            int bytesRead;
+            while ((bytesRead = sourceStream.Read(buffer, 0, BufferSize)) > 0)
             {
-                destStream.Write(buffer, 0, i);
+                destStream.Write(buffer, 0, bytesRead);
             }
         }
 
@@ -133,7 +143,7 @@ namespace BackupperConsole
         public void BackupRun(string root, string backupRoot)
         {
             var dirs = new Stack<string>(20);
-
+            ignoredDirs = new HashSet<string>(conf.IgnoreDir, StringComparer.InvariantCultureIgnoreCase);
             if (!Directory.Exists(root))
             {
                 throw new FileNotFoundException();
@@ -143,7 +153,7 @@ namespace BackupperConsole
             while (dirs.Count > 0)
             {
                 var currentDir = dirs.Pop();
-                if (conf.IgnoreDir == null || conf.IgnoreDir?.Any(c => string.Equals(c, currentDir, StringComparison.InvariantCultureIgnoreCase)) == false)
+                if (ignoredDirs.Contains(currentDir))
                 {
                     string[] subDirs;
                     try
@@ -154,7 +164,7 @@ namespace BackupperConsole
                     {
                         if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
                         {
-                            writeLine(ex.Message);
+                            WriteLineSilently(ex.Message);
                             continue;
                         }
                         throw;
@@ -168,7 +178,7 @@ namespace BackupperConsole
                     {
                         if (ex is UnauthorizedAccessException || ex is DirectoryNotFoundException)
                         {
-                            writeLine(ex.Message);
+                            WriteLineSilently(ex.Message);
                             continue;
                         }
                         throw;
@@ -191,7 +201,7 @@ namespace BackupperConsole
                                 if (!Compare(filePath, backupFilePath, fi.Name))
                                 {
 #if DEBUG
-                                    writeLine("copy: " + fi.Name);
+                                    WriteLineSilently("copy: " + fi.Name);
 #endif
                                     FileCopied += 1;
                                     CopyFile(filePath, backupFilePath);
@@ -200,7 +210,7 @@ namespace BackupperConsole
                         }
                         catch (FileNotFoundException e)
                         {
-                            writeLine(e.Message);
+                            WriteLineSilently(e.Message);
                             continue;
                         }
                     }
@@ -212,7 +222,7 @@ namespace BackupperConsole
             }
         }
 
-        private void writeLine(string msg)
+        private void WriteLineSilently(string msg)
         {
             if (!silentOp)
             {
@@ -220,7 +230,7 @@ namespace BackupperConsole
             }
         }
 
-        private void readLine()
+        private void ReadLineSilently()
         {
             if (!silentOp)
             {
