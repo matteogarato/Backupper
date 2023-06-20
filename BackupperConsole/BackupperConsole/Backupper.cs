@@ -1,9 +1,5 @@
-﻿using System.Text;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
+using System.Text;
 
 namespace BackupperConsole
 {
@@ -15,7 +11,8 @@ namespace BackupperConsole
         /// <summary>
         /// Determines whether to show output to the console
         /// </summary>
-        private bool silentOp;
+        private readonly bool silentOp;
+
         /// <summary>
         /// Number of file with specific extension found
         /// </summary>
@@ -35,7 +32,7 @@ namespace BackupperConsole
         ///  ignored dirs
         /// </summary>
         private HashSet<string> ignoredDirs;
-        
+
         /// <summary>
         /// write buffer dimension
         /// </summary>
@@ -60,8 +57,8 @@ namespace BackupperConsole
             if (conf == null)
             {
                 Configuration.CreateDefaultConfig();
-                WriteLineSilently("configuration not found, created standard in Application run folder...");
-                WriteLineSilently("============ Press Any key To Continue =============");
+                WriteLineSilently("configuration not found, created standard in Application run folder...\n" +
+                                  "============ Press Any key To Continue =============");
                 ReadLineSilently();
                 return;
             }
@@ -78,8 +75,8 @@ namespace BackupperConsole
                 WriteLineSilently(ex.Message);
 #endif
             }
-            WriteLineSilently("==================== End Backup ====================");
-            WriteLineSilently("============ Press Any key To Continue =============");
+            WriteLineSilently("==================== End Backup ====================\n" +
+                              "============ Press Any key To Continue =============");
             ReadLineSilently();
         }
 
@@ -236,7 +233,7 @@ namespace BackupperConsole
             {
 #if !DEBUG
                 Console.ReadKey();
-#endif                
+#endif
             }
         }
     }
