@@ -44,8 +44,8 @@ namespace BackupperConsole
             {
                 FromDir = "From Directory",
                 BackupDir = "To Directory",
-                Extensions = new List<string> { ".jpeg", ".jpg" },
-                IgnoreDir = new List<string> { "some", "subfolder", "directory" }
+                Extensions = [".jpeg", ".jpg"],
+                IgnoreDir = ["some", "subfolder", "directory"]
             };
             File.WriteAllText(ConfigFilePath, JsonSerializer.Serialize(defaultConfig));
         }
